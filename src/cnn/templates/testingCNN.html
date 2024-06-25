@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="eng">
+	<head>
+		<title>"Convolutional Neural Network"</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<style type="text/css">
+			
+			.options label {
+				font-size: 12px;
+				font-family: Arial, Helvetica, sans-serif;
+				width: 100px;
+				text-align: left;
+				padding-right: 10px;
+			}
+
+			#outer-container {
+				display: flex;
+				flex-direction: row;
+			}
+
+			div.grid {
+				display: grid;
+				grid-template-columns: repeat(300, 2px);
+				grid-template-rows: repeat(300, 2px);
+				width: 600px;
+				height: 600px;
+				border: 2px solid black;
+				margin-left: 10px;
+			}
+			
+			div.grid > div {
+				margin: 0;
+				padding: 0;
+				border: 0;
+				color: white;
+				background-color: white;
+			}
+
+			div.grid > div.online {
+				background-color: black;
+				color: black;
+			}
+			
+			#form {
+				margin-left: 10px;
+				width: 500px;
+			}
+
+			ul li.links {
+				display: inline-block;
+				list-style-type: none;
+				margin: 20px;
+			}
+
+			td.align-right {
+				text-align: right;
+			}
+			label.align-right {
+				text-align: right;
+			}
+
+			.options input {
+				width: 50px;
+			}
+
+			td, th {
+				min-width: 75px;
+			}
+
+			th {
+				border: 2px solid black;
+				border-collapse: collapse;
+			}
+			td {
+				border: 1px solid darkgrey;
+				border-collapse: collapse;
+			}
+
+			table {
+				border-collapse: collapse;
+				border: 2px solid black;
+			}
+
+			#status {
+				min-width: 350px;
+			}
+
+		</style>
+	</head>
+	<body>
+		<h3>Convolutional Neural Network Testing</h3>
+		<nav>
+			<ul>
+				<li class="links"><a href="http://127.0.0.1:8080/imageCNN2">Train</a></li>
+				<li class="links"><a href="http://127.0.0.1:8080/imageCNN2test">Test</a></li>
+			</ul>
+		</nav>
+		<div id="outer-container">
+			<div class="grid">
+				{{range .Grid}}
+					<div class="{{.}}"></div>
+				{{end}}
+			</div>
+			<div id="form">
+				<form action="http://127.0.0.1:8080/imageCNN2test" method="post">
+					<fieldset>
+						<div class="options">
+							<label class="align-right" for="epochs">Epochs:</label>
+							<input type="text" id="epochs" value="{{.Epochs}}" readonly /input>
+							<label class="align-right" for="learningrate">Learning Rate:</label>
+							<input type="text" id="learningrate" value="{{.LearningRate}}" readonly /input>
+							<table>
+								<tr>
+									<th>Layer</th>
+									<th>Feature Maps</th>
+									<th>Size (neurons)</th>
+								</tr>
+								<tr>
+									<td>1</td>
+									<td>1</td>
+									<td>256x256</td>
+								</tr>
+								<tr>
+									<td>2</td>
+									<td>32</td>
+									<td>16x16</td>
+								</tr>
+								<tr>
+									<td>3</td>
+									<td>4</td>
+									<td>1x1</td>
+								</tr>
+							</table>
+							<p>Select Image
+								<br />
+								<select name="selectimage" id="selectimage" required>
+									<option value="0">apple</option>
+									<option value="1">baseball glove</option>
+									<option value="2">bear</option>
+									<option value="3">bird</option>
+									<option value="4">cactus</option>
+									<option value="5">cat</option>
+									<option value="6">dog</option>
+									<option value="7">elephant</option>
+									<option value="8">grasshopper</option>
+									<option value="9">horse</option>
+									<option value="10">owl</option>
+									<option value="11">reindeer</option>
+									<option value="12">rose</option>
+									<option value="13">spider</option>
+									<option value="14">troll</option>
+									<option value="15">wagon</option>
+								</select>
+							</p>
+						</div>
+						<input type="submit" value="Submit" />
+						<input type="text" id="status" name="status" value="{{.Status}}" readonly />
+					</fieldset>
+				</form>
+				<h3>Test Results</h3>
+				<table>
+					<tr>
+						<th>Class</th>
+						<th>Image</th>
+						<th>Count</th>
+						<th>Correct (%)</th>
+					</tr>
+					{{range .TestResults}}
+						<tr>
+							<td>{{.Class}}</td>
+							<td>{{.Image}}</td>
+							<td>{{.Count}}</td>
+							<td>{{.Correct}}</td>
+						</tr>
+					{{end}}
+					<tr>
+						<td>Totals</td>
+						<td></td>
+						<td>{{.TotalCount}}</td>
+						<td>{{.TotalCorrect}}</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>
