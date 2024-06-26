@@ -269,7 +269,7 @@ func (cnn *CNN) filterB(f *Filter, layer, i1 int) error {
 	// height and width of the data that the filter convolves over
 	dim := sizeFMs[layer]
 	// Rotate the filter in x and y coordinates
-	//L := kernelDim - 1
+	L := kernelDim - 1
 	for row := 0; row < dim; row += stride {
 		for col := 0; col < dim; col += stride {
 			sum := 0.0
@@ -277,8 +277,8 @@ func (cnn *CNN) filterB(f *Filter, layer, i1 int) error {
 			for j := 0; j < kernelDim; j++ {
 				curCol := col
 				for i := 0; i < kernelDim; i++ {
-					sum += f.wgt[j][i] * cnn.fm[layer][i1].data[curRow][curCol].delta
-					//sum += f.wgt[L-j][L-i] * cnn.fm[layer][i1].data[curRow][curCol].delta
+					//sum += f.wgt[j][i] * cnn.fm[layer][i1].data[curRow][curCol].delta
+					sum += f.wgt[L-j][L-i] * cnn.fm[layer][i1].data[curRow][curCol].delta
 					curCol++
 				}
 				curRow++
