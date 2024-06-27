@@ -578,7 +578,7 @@ func (cnn *CNN) createExamples() error {
 	}
 	// Each image is a separate image class
 	class := 0
-	// convention chosen: if gray.Y < on, set value to 1 means black
+	// display convention chosen: if gray.Y < on, set value to 1 means black
 	// else if gray.Y >= on, set value to -1 means white
 	for _, dirEntry := range files {
 		name := dirEntry.Name()
@@ -885,7 +885,7 @@ func handleTrainingCNN(w http.ResponseWriter, r *http.Request) {
 		cnn.insertLabels()
 
 		// At the end of all epochs, insert form previous control items in PlotT
-		cnn.plot.LearningRate = strconv.FormatFloat(cnn.learningRate, 'f', 4, 64)
+		cnn.plot.LearningRate = strconv.FormatFloat(cnn.learningRate, 'f', 5, 64)
 		cnn.plot.Epochs = strconv.Itoa(cnn.epochs)
 
 		// Save Filters to csv file, one  per line
@@ -912,17 +912,17 @@ func handleTrainingCNN(w http.ResponseWriter, r *http.Request) {
 			for j := 0; j < n; j++ {
 				for row := 0; row < kernelDim; row++ {
 					for col := 0; col < kernelDim; col++ {
-						fmt.Fprintf(f, "%f,", cnn.link[i][j].wgt[row][col])
+						fmt.Fprintf(f, "%.10f,", cnn.link[i][j].wgt[row][col])
 					}
 				}
 				// last one is the bias weight and newline
-				fmt.Fprintf(f, "%f\n", cnn.link[i][j].biaswgt)
+				fmt.Fprintf(f, "%.10f\n", cnn.link[i][j].biaswgt)
 			}
 		}
 
 		// save flattened layer, one weight per line because too long to split
 		for _, wt := range cnn.wgtOutput {
-			fmt.Fprintf(f, "%f\n", wt)
+			fmt.Fprintf(f, "%.10f\n", wt)
 		}
 
 		cnn.plot.Status = "MSE plotted"
@@ -978,7 +978,7 @@ func (cnn *CNN) runClassification() error {
 	}
 	cnn.plot.TotalCount = strconv.Itoa(totalCount)
 	cnn.plot.TotalCorrect = strconv.Itoa(totalCorrect * 100 / totalCount)
-	cnn.plot.LearningRate = strconv.FormatFloat(cnn.learningRate, 'f', 4, 64)
+	cnn.plot.LearningRate = strconv.FormatFloat(cnn.learningRate, 'f', 5, 64)
 	cnn.plot.Epochs = strconv.Itoa(cnn.epochs)
 
 	cnn.plot.Status = "Testing results completed."
