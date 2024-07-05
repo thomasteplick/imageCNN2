@@ -32,8 +32,8 @@ and the Learning Curve (mean-square error (MSE) vs epoch) is graphed.  As can be
 but it eventually settles down after about 30 epochs. An epoch is the forward and backward propagation of all the 16 training samples.
 </p>
 <p>
-When the <i>Test</i> link is clicked, 64 examples are supplied to the MLP.  It classifies the images.
-The test results are tabulated and the actual images are graphed from the flattened images that were supplied to the MLP.
+When the <i>Test</i> link is clicked, 16 examples are supplied to the MLP.  It classifies the images.
+The test results are tabulated and the actual images are graphed from the png files that were supplied to the CNN.
 It takes some trial-and-error with the MLP Training Parameters to reduce the MSE to zero.  It is possible to a specify a 
 more complex MLP than necessary and not get good results.  For example, using more hidden layers, a greater layer depth,
 or over training with more examples than necessary may be detrimental to the MLP.  Clicking the <i>Train</i> link starts a new training
