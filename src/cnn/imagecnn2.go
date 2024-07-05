@@ -119,9 +119,9 @@ type Stats struct {
 
 // training examples
 type Sample struct {
-	name    string    // image; eg., elephant
-	desired int       // numerical class of the image
-	image   [][]uint8 // png image 256*256 pixels
+	name    string   // image; eg., elephant
+	desired int      // numerical class of the image
+	image   [][]int8 // flattened png image 256*256 pixels, [-1,1]
 }
 
 // Feature Map consists of height, width, and Nodes
@@ -194,10 +194,10 @@ func (cnn *CNN) calculateMSE(epoch int) {
 func (cnn *CNN) determineClass(j int, sample Sample) error {
 	// At output layer, classify example, increment class count, %correct
 
-	// convert node outputs to the class; 0.5 is the threshold for logistic function
+	// convert node outputs to the class; 0.0 is the threshold for sigmoid tanh
 	class := 0
 	for i, output := range cnn.node[1] {
-		if output.y > 0.5 {
+		if output.y > 0.0 {
 			class |= (1 << i)
 		}
 	}
@@ -213,12 +213,12 @@ func (cnn *CNN) determineClass(j int, sample Sample) error {
 
 // class2desired constructs the desired output from the given class
 func (cnn *CNN) class2desired(class int) {
-	// tranform int to slice of 0 and 1 representing the 0 and 1 bits
+	// tranform int to slice of -1 and 1 representing the 0 and 1 bits
 	for i := 0; i < len(cnn.desired); i++ {
 		if class&1 == 1 {
 			cnn.desired[i] = 1
 		} else {
-			cnn.desired[i] = 0
+			cnn.desired[i] = -1
 		}
 		class >>= 1
 	}
@@ -260,7 +260,7 @@ func (cnn *CNN) updateFilter(layer int, i1, i2, d1 int) error {
 // Convolve in the backward propagation direction.
 // Filter the local gradients from the downstream layer FMs
 func (cnn *CNN) filterB(f *Filter, layer, i1 int) error {
-	// Convolve the filter over the delta and son't use padding
+	// Convolve the filter over the delta and don't use padding
 	// around the edges.
 
 	// Perform the operations in the clipboard
@@ -269,28 +269,34 @@ func (cnn *CNN) filterB(f *Filter, layer, i1 int) error {
 	// height and width of the data that the filter convolves over
 	dim := sizeFMs[layer]
 	// Rotate the filter in x and y coordinates
-	L := kernelDim - 1
-	for row := 0; row < dim; row += stride {
-		for col := 0; col < dim; col += stride {
+	//L := kernelDim - 1
+	for row := 0; row < dim; row++ {
+		for col := 0; col < dim; col++ {
 			sum := 0.0
 			curRow := row
 			for j := 0; j < kernelDim; j++ {
 				curCol := col
 				for i := 0; i < kernelDim; i++ {
-					//sum += f.wgt[j][i] * cnn.fm[layer][i1].data[curRow][curCol].delta
-					sum += f.wgt[L-j][L-i] * cnn.fm[layer][i1].data[curRow][curCol].delta
+					sum += f.wgt[j][i] * cnn.fm[layer][i1].data[curRow][curCol].delta
+					//sum += f.wgt[L-j][L-i] * cnn.fm[layer][i1].data[curRow][curCol].delta
 					curCol++
+					if curCol == dim {
+						break
+					}
 				}
 				curRow++
+				if curRow == dim {
+					break
+				}
 			}
 			// save the filtered delta in clipboard
-			data[row/stride][col/stride].delta = sum
+			data[row][col].delta = sum
 		}
 	}
 
 	// Put the filtered delta back in the FeatureMap.data[row][col].delta
-	for row := 0; row < dim/stride; row++ {
-		for col := 0; col < dim/stride; col++ {
+	for row := 0; row < dim; row++ {
+		for col := 0; col < dim; col++ {
 			cnn.fm[layer][i1].data[row][col].delta = data[row][col].delta
 		}
 	}
@@ -329,7 +335,8 @@ func (cnn *CNN) filterF(f *Filter, layer, i1, i2 int) error {
 				curRow++
 			}
 			// compute output y = Phi(v) with the activation function
-			data[row/stride][col/stride].y = math.Max(0.0, sum)
+			//data[row/stride][col/stride].y = math.Max(0.0, sum)
+			data[row/stride][col/stride].y = a * math.Tanh(b*sum)
 		}
 	}
 
@@ -415,8 +422,8 @@ func (cnn *CNN) propagateForward(samp Sample, epoch int) error {
 		for i2 := 0; i2 < d2; i2++ { // previous layer loop
 			v += cnn.wgtOutput[i2*d1+i1] * cnn.node[0][i2].y
 		}
-		// compute output y = Phi(v) is the logistic function
-		cnn.node[1][i1].y = 1.0 / (1.0 + math.Exp(-v))
+		// compute output y = Phi(v) is the logistic or sigmoid function
+		cnn.node[1][i1].y = a * math.Tanh(b*v)
 	}
 
 	return nil
@@ -431,7 +438,7 @@ func (cnn *CNN) propagateBackward() error {
 		//compute error e=d-Phi(v)
 		cnn.node[1][i1].delta = cnn.desired[i1] - cnn.node[1][i1].y
 		// Multiply error by this node's Phi'(v) to get local gradient.
-		cnn.node[1][i1].delta *= cnn.node[1][i1].y * (1.0 - cnn.node[1][i1].y)
+		cnn.node[1][i1].delta *= K1 * (K2 - cnn.node[1][i1].y*cnn.node[1][i1].y)
 		// Send this node's local gradient to previous layer nodes through corresponding link.
 		// Each node in previous layer is connected to current node because the network
 		// is fully connected.  d2 is the previous layer depth
@@ -469,12 +476,11 @@ func (cnn *CNN) propagateBackward() error {
 		d1 := len(cnn.fm[layer])
 		for i1 := 0; i1 < d1; i1++ { // this layer loop
 			// Multiply deltas propagated from downstream FMs by this node's Phi'(v) to get local gradient.
-			// For the ReLU = max(0, v), Phi'(v) = 1 if v > 0, else Phi'(v) = 0
 			for j := range cnn.fm[layer][i1].data {
 				for i := range cnn.fm[layer][i1].data[j] {
-					if cnn.fm[layer][i1].data[j][i].y <= 0 {
-						cnn.fm[layer][i1].data[j][i].delta = 0.0
-					}
+					cnn.fm[layer][i1].data[j][i].delta *=
+						K1 * (K2 - cnn.fm[layer][i1].data[j][i].y*cnn.fm[layer][i1].data[j][i].y)
+
 				}
 			}
 
@@ -578,6 +584,7 @@ func (cnn *CNN) createExamples() error {
 	}
 	// Each image is a separate image class
 	class := 0
+	const on = 128 // boundary between black and white for 8-bit grayscale
 	// display convention chosen: if gray.Y < on, set value to 1 means black
 	// else if gray.Y >= on, set value to -1 means white
 	for _, dirEntry := range files {
@@ -607,7 +614,12 @@ func (cnn *CNN) createExamples() error {
 			for y := rect.Min.Y; y < rect.Max.Y; y++ {
 				for x := rect.Min.X; x < rect.Max.X; x++ {
 					gray := color.GrayModel.Convert(img.At(x, y)).(color.Gray)
-					cnn.samples[class].image[y][x] = gray.Y
+					// black
+					if gray.Y < on {
+						cnn.samples[class].image[y][x] = 1
+					} else { // white
+						cnn.samples[class].image[y][x] = -1
+					}
 				}
 			}
 			class++
@@ -643,9 +655,9 @@ func newCNN(r *http.Request, epochs int, plot *PlotT) (*CNN, error) {
 
 	// construct container for images
 	for i := range cnn.samples {
-		cnn.samples[i].image = make([][]uint8, imgHeight)
+		cnn.samples[i].image = make([][]int8, imgHeight)
 		for j := range cnn.samples[i].image {
-			cnn.samples[i].image[j] = make([]uint8, imgWidth)
+			cnn.samples[i].image[j] = make([]int8, imgWidth)
 		}
 	}
 
@@ -993,7 +1005,7 @@ func (cnn *CNN) drawImages(r *http.Request) error {
 	const (
 		startRow = (rows - imgHeight) / 2
 		startCol = (cols - imgWidth) / 2
-		on       = 128 // boundary between black and white for 8-bit grayscale
+		on       = 0 // boundary between black and white for 8-bit grayscale
 	)
 
 	txt := r.FormValue("selectimage")
@@ -1014,7 +1026,7 @@ func (cnn *CNN) drawImages(r *http.Request) error {
 	for j := 0; j < imgHeight; j++ {
 		for i := 0; i < imgWidth; i++ {
 			// This cell is black in the image
-			if cnn.samples[samp].image[j][i] < on {
+			if cnn.samples[samp].image[j][i] > on {
 				cnn.plot.Grid[current+i] = "online"
 			}
 			k++
@@ -1042,9 +1054,9 @@ func newTestingCNN(r *http.Request, plot *PlotT) (*CNN, error) {
 	}
 	// construct container for images
 	for i := range cnn.samples {
-		cnn.samples[i].image = make([][]uint8, imgHeight)
+		cnn.samples[i].image = make([][]int8, imgHeight)
 		for j := range cnn.samples[i].image {
-			cnn.samples[i].image[j] = make([]uint8, imgWidth)
+			cnn.samples[i].image[j] = make([]int8, imgWidth)
 		}
 	}
 
