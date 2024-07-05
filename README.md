@@ -46,4 +46,8 @@ phase and the MLP Training Parameters must be entered again.
 <b>Image Recognition Test Results, One Hidden Layer, 32 feature maps, 32x32 neurons average downsampled 2x, flattened output layer
 ![image](https://github.com/thomasteplick/imageCNN2/assets/117768679/fde79714-3507-4266-99cf-9000b59c22c2)
 
+![image](https://github.com/thomasteplick/imageCNN2/assets/117768679/c3d1819c-121f-4c57-b6d3-9c333443bdb2)
+
+![image](https://github.com/thomasteplick/imageCNN2/assets/117768679/ba766870-82f4-4859-aee0-253063b3ab7b)
+
 
