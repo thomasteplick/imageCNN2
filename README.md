@@ -19,7 +19,7 @@ image</b>.
 The user selects the MLP training parameters:
 <li>Epochs</li>
 <li>Learning Rate</li>
-<br>
+<br />
 <p>
 The <i>Learning Rate</i> is between .01 and .00001.  Each <i>Epoch</i> consists of 16 <i>Training Examples</i>.  
 One training example is a png image and the desired class (0, 1,…, 15).  There are 16 images and therefore 16 classes.
@@ -38,6 +38,25 @@ It takes some trial-and-error with the MLP Training Parameters to reduce the MSE
 more complex MLP than necessary and not get good results.  For example, using more hidden layers, a greater layer depth,
 or over training with more examples than necessary may be detrimental to the MLP.  Clicking the <i>Train</i> link starts a new training
 phase and the MLP Training Parameters must be entered again.
+</p>
+<h4>Details</h4>
+<p>
+ The Convolutional Neural Network consists of Feature Maps which are two-dimensional
+arrays (planes) of neurons that are arranged in layers.  Each Feature Map has a
+8x8 filter or kernel (64 weights) that is used to perform a convolution with previous
+layer Feature Maps.  The stride or displacement of each convolution is eight.
+Padding is used so that the convolution produces the same size output Feature Map as
+the input Feature Map.  The input layer is the 256x256 pixel image.  There is
+one hidden layer, the hidden layer consists of a convolution operation and
+a downsample operation.  The downsample operation reduces the Feature Map width and
+height by a factor of two.  The last hidden layer is flattened and fully connected
+to the output layer.  The hidden layer Feature Maps depths and sizes are as follows:
+32@32x32 (32*8 weights).  Each filter in the Feature Maps has a bias input of 1 and weight.
+The output layer also has a bias input of 1 and weight.  The output layer is 4@1X1.
+This architecture can classify 2^4 = 16 images.  The flattened fully-connected layer
+between the last hidden layer and the output layer is 32*16*16 + 1 = 8193 neurons.
+These are fully connected to the output layer consisting of the four neurons.
+This will require 4*8193 weights. 
 </p>
 
 <b>Image Recognition Learning Curve, MSE vs Epoch, One Hidden Layer, 32 feature maps, 32x32 neurons average downsampled 2x, flattened output layer
