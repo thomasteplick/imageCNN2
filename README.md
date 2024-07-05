@@ -29,7 +29,7 @@ The 1 represents black (grayscale < 128) and the -1 represents white (grayscale 
 <p>
 When the <i>Submit</i> button on the MLP Training Parameters form is clicked, the weights in the network are trained
 and the Learning Curve (mean-square error (MSE) vs epoch) is graphed.  As can be seen in the screen shots below, there is significant variance over the ensemble,
-but it eventually settles down after about 30 epochs. An epoch is the forward and backward propagation of all the 16 training samples.
+but it eventually settles down after about 100 epochs. An epoch is the forward and backward propagation of all the 16 training samples.
 </p>
 <p>
 When the <i>Test</i> link is clicked, 16 examples are supplied to the MLP.  It classifies the images.
